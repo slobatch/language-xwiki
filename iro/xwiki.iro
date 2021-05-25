@@ -1,0 +1,279 @@
+#################################################################
+## Iro
+################################################################
+##
+## * Press Ctrl + '+'/'-' To Zoom in
+## * Press Ctrl + S to save and recalculate...
+## * Documents are saved to web storage.
+## * Only one save slot supported.
+## * Matches cannot span lines.
+## * Unicode chars must be defined in \u0000 to \uffff format.
+## * All matches must be contained by a single group ( ... )
+## * Look behinds not permitted, (?<= or (?<!
+## * Look forwards are permitted (?= or (?!
+## * Constants are defined as __my_const = (......)
+## * The \= format allows unescaped regular expressions
+## * Constants referenced by match \= $${__my_const}
+## * Constants can reference other constants
+## * You are free to delete all the default scopes.
+## * Twitter : ainslec , Web: http://eeyo.io/iro
+##
+################################################################
+
+name                   = XWiki
+file_extensions []     = xwiki, wiki;
+
+################################################################
+## Constants
+################################################################
+
+__MY_CONSTANT \= (\b.*)
+
+################################################################
+## Styles
+################################################################
+
+styles [] {
+
+// Macros
+.comment : style {
+   color = light_green
+   italic = true
+   textmate_scope = comment
+}
+
+.warning : style {
+   color = yellow
+   textmate_scope = markup.quote
+}
+
+.macro : style {
+   color = purple
+   textmate_scope = entity.name.section
+}
+
+// Markup Formatting
+
+.heading_h1 : style {
+   color = light_blue
+   textmate_scope = markup.heading.heading-1
+}
+
+.heading_h2 : style {
+   color = light_blue
+   textmate_scope = markup.heading.heading-2
+}
+
+.heading_h3 : style {
+   color = cyan
+   textmate_scope = markup.heading.heading-3
+}
+
+.heading_h4 : style {
+   color = cyan
+   textmate_scope = markup.heading.heading-4
+}
+
+.heading_h5 : style {
+   color = blue
+   textmate_scope = markup.heading.heading-5
+}
+
+.heading_h6 : style {
+   color = blue
+   textmate_scope = markup.heading.heading-6
+}
+
+
+.bold : style {
+   bold = true
+   color = brown
+   textmate_scope = markup.bold
+}
+
+.italic : style {
+   italic = true
+   color = violet
+   textmate_scope = markup.italic
+}
+
+.link : style {
+   color = red
+   textmate_scope = link, entity.name.tag punctuation
+}
+
+.link_text : style {
+   background_color = white
+   textmate_scope = entity.name
+}
+
+.link_url : style {
+   color = orange
+   background_color = grey
+   textmate_scope = entity.name.filename
+}
+
+.link_operator : style {
+   color = red_2
+   background_color = yellow
+   textmate_scope = keyword.operator
+}
+
+}
+
+#################################################
+## Parse contexts
+#################################################
+
+contexts [] {
+
+##############################################
+## Main Context - Entry point context
+##############################################
+
+main : context {
+
+   : include "markup_formatting" ;
+   : include "macros" ;
+
+}
+
+#################################################
+## End of Contexts
+#################################################
+
+###########################################
+## Macros
+###########################################
+
+macros : context {
+
+   // comment
+   : inline_push {
+         regex          \= (\{\{(comment)\}\})
+         styles []       = .comment;
+         : pop {
+            regex \= (\{\{(\/comment)\}\})
+            styles [] = .comment;
+         }
+         : include "markup_formatting" ;
+      }
+
+   // warning
+   : inline_push {
+         regex          \= (\{\{(warning)\}\})
+         styles []       = .warning;
+         // default_style   = .warning
+         : pop {
+            regex       \= (\{\{(\/warning)\}\})
+            styles []    = .warning;
+         }
+         :include "markup_formatting" ;
+      }
+
+   // generic macro
+   : inline_push {
+      regex          \= (\{\{.*\}\})
+      styles []       = .macro;
+      : pop {
+         regex       \= (\{\{(\/.*)\}\})
+         styles []    = .macro;
+      }
+      :include "markup_formatting" ;
+   }
+}
+
+
+
+###########################################
+## Markup Formatting
+###########################################
+
+markup_formatting : context {
+   // headings
+   : pattern {
+      regex \= ((={6})(.*)(={6}))
+      styles [] = .heading_h6;
+   }
+
+
+   : pattern {
+      regex \= ((={5})(.*)(={5}))
+      styles [] = .heading_h5;
+   }
+
+   : pattern {
+      regex \= ((={4})(.*)(={4}))
+      styles [] = .heading_h4;
+   }
+
+   : pattern {
+      regex \= ((={3})(.*)(={3}))
+      styles [] = .heading_h3;
+   }
+
+   : pattern {
+      regex \= ((={2})(.*)(={2}))
+      styles [] = .heading_h2;
+   }
+
+   : pattern {
+      regex \= ((={1})(.*)(={1}))
+      styles [] = .heading_h1;
+   }
+
+   // bold
+   : inline_push {
+      regex          \= (\*\*)
+      styles []       = .bold;
+      default_style   = .bold
+      : pop {
+         regex       \= (\*\*)
+         styles []    = .bold;
+      }
+   }
+
+   // italics
+   : inline_push {
+      regex          \= (\/\/)
+      styles []       = .italic;
+      default_style   = .italic
+      : pop {
+         regex       \= (\/\/)
+         styles []    = .italic;
+      }
+   }
+
+   // links
+   : push {
+      regex \= (\[\[)
+      styles [] = .link;
+      context [] = inner_link;
+   }
+}
+
+// link text, operator, and source
+inner_link : context {
+   : pop {
+      regex \= (]])
+      styles [] = .link;
+   }
+   : pattern {
+      regex \= ([^>]*)(?=]])
+      styles [] = .link_url;
+   }
+   : pattern {
+      regex \= ((\>\>))
+      styles [] = .link_operator;
+   }
+   : pattern {
+      regex \= (((.*?)(?=\>\>)))
+      styles [] = .link_text;
+   }
+
+
+   // default_style = .link
+}
+
+
+}

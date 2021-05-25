@@ -1,0 +1,14 @@
+{
+  "name": "language-xwiki",
+  "version": "0.0.0",
+  "description": "A language package for xwiki markup.",
+  "keywords": [
+    "language",
+    "grammar"
+  ],
+  "repository": "https://github.com/atom/language-xwiki",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  }
+}
